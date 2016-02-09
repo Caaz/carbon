@@ -1,0 +1,5 @@
+# Pub shenanigans.
+.pub
+packages
+.packages
+pubspec.lock
