@@ -7,8 +7,8 @@ I used to use express, but the lack of secure servers disappointed me. I could h
 Because of my previous experience with express, this framework uses a similar approach to handling routes and what not. Features are created as I need them.
 
 ## Installation
-Add this to your pubspec.yaml dependencies.
-```
+Add this to your pubspec.yaml dependencies and run `pub get`.
+```yaml
 dependencies:
   carbon:
     git: git://github.com/Caaz/carbon.git
@@ -17,8 +17,8 @@ dependencies:
 
 
 ## Usage
-Here's a quick example of using this package. With some helpful comments. Actually running it should create folders that Carbon uses by default.
-```
+Here's a quick example of using this package. With some helpful comments.
+```dart
 import "dart:io";
 import "package:carbon/carbon.dart";
 import 'jade.views.dart' deferred as jadeViews;
@@ -48,11 +48,22 @@ main() async {
   ..listen(InternetAddress.ANY_IP_V4, 3000);
 }
 ```
+By default, Carbon uses the following folders and files, creating them if they're not there to begin with
+- `app`
+  - `jade` Used for jade views.
+    - `pages` The folder you should place actual views in.
+  - `scss` Used for precompiled scss files.
+- `public` the root directory of every static file served
+  - `compile` Where compiled scss gets thrown
+- `jade.views.dart` compiled jade files.
+
+## Examples
+- [Portfolio](http://github.com/Caaz/portfolio-dart)
 
 ## TODO
 
-- Write a better readme.
 - Explain how to use secure server stuff.
 - Explain path usage.
 - Explain jade?
 - Optional sass.
+- Use RegExp for routs.
