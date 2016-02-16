@@ -1,7 +1,7 @@
 name: carbon
-version: 0.0.1
+version: 0.0.2
 description: >
-  Rails-like architecture for dart servers.
+  Dart framework for building web applications
 author: Daniel Caaz <DCaazy@gmail.com>
 dependencies:
   jaded: 0.1.9
