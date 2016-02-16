@@ -1,44 +1,44 @@
 library carbon;
 import 'dart:io';
-// import 'jade.views.dart' deferred as views;
+import "package:jaded/jaded.dart" as jade;
+import 'jade.views.dart' deferred as views;
+
+// RegExp fname = new RegExp(r'.+/(.+?)\.(?:.+?)$');
+// RegExp underscore = new RegExp(r'/_.+$');
 
 class Carbon {
-  // static const String viewPath = "./app/views/pages/";
-  Map _pages = new Map();
-  Carbon(Map pages) {
-    RegExp fname = new RegExp(r'.+/(.+?)\.(?:.+?)$');
-    for(String key in pages.keys)
-      _pages[fname.firstMatch(key).group(1)] = pages[key];
-    print("Keys: "+_pages.keys.join());
-  }
-  serve(host, port) async {
-    print('Listening at ${host.address}:${port}');
-    HttpServer server = await HttpServer.bind(host,port);
-    await for (HttpRequest request in server) {
-      try {
-        if (request.method == 'GET') _get(request);
-        else _error(request,HttpStatus.METHOD_NOT_ALLOWED);
-      } catch (e) { print('Exception in handleRequest: $e'); }
+  String publicDir;
+  String sassDir;
+  String jadeDir;
+  String compileDir;
+  Carbon({this.publicDir: 'public', this.sassDir: 'app/sass', this.jadeDir: 'app/jade', this.compileDir: 'public/compile'}) { _compile(); }
+  listen(InternetAddress address, int port, { String chain:null, String key:null, String password:null }) {
+    var _handleServer = (HttpServer server) => server.listen(_handleRequest);
+    if(chain.isNotEmpty || key.isNotEmpty || password.isNotEmpty) {
+      SecurityContext security = new SecurityContext();
+      if(chain.isNotEmpty) security.useCertificateChain(Platform.script.resolve(chain).toFilePath());
+      if(key.isNotEmpty) {
+        if(password.isNotEmpty) security.usePrivateKey(key, password: password);
+        else security.usePrivateKey(key);
+      }
+      HttpServer.bindSecure(address, port, security).then(_handleServer);
     }
+    else HttpServer.bind(address,port) .then(_handleServer);
   }
-  _get(HttpRequest request) async {
-    String route = (request.uri.path.length>1)?request.uri.path.substring(1):'index';
-    if(_pages.containsKey(route)) {
-      request.response
-      ..statusCode = HttpStatus.OK
-      ..headers.contentType = ContentType.HTML
-      ..write(await _pages[route]())
-      ..close();
-    }
-    else _error(request,HttpStatus.NOT_FOUND);
+  _compile() {
+    RegExp fileName = new RegExp(r'.+/(.+?)\.(?:.+?)$');
+    RegExp underscore = new RegExp(r'/_.+$');
+    // Compile stylesheets.
+    for (var file in new Directory(sassDir).listSync())
+      if ((file is File) && (!underscore.hasMatch(file.path)))
+        Process.run('sass', [ '--scss', '--style=compressed', '--sourcemap=none',
+          file.path, compileDir+'/'+fileName.firstMatch(file.path).group(1)+'.css'])
+          ..then((proc){ if(proc.stderr.length>1) throw proc.stderr; });
+    // Compile jade.
+    new File('jade.views.dart').writeAsStringSync(jade.renderDirectory(jadeDir));
+    views.loadLibrary();
   }
-  _error(HttpRequest request, int status) async {
-    request.response.statusCode = status;
-    if(_pages.containsKey(status.toString())) {
-      request.response
-      ..headers.contentType = ContentType.HTML
-      ..write(await _pages[status.toString()]());
-    }
-    request.response.close();
+  _handleRequest(HttpRequest req) {
+
   }
 }
