@@ -1,9 +1,6 @@
 library carbon;
 import 'dart:io';
 import "package:jaded/jaded.dart" as jade;
-// part 'utils.dart';
-// RegExp fname = new RegExp(r'.+/(.+?)\.(?:.+?)$');
-// RegExp underscore = new RegExp(r'/_.+$');
 
 class Carbon {
   static final Map<String,RegExp> _types = {
