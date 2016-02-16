@@ -10,6 +10,7 @@ class Carbon {
   };
   List<Route> _routes = new List();
   Map<String,Function> _views;
+  // God, clean this up.
   String dirPublic;
   String dirScss;
   String dirJade;
@@ -18,7 +19,7 @@ class Carbon {
   listen(InternetAddress address, int port, { String chain:'', String key:'', String password:'' }) {
     var _handleServer = (HttpServer server) {
       server.listen(_handleRequest);
-      _log("Listening at "+server.address.host+":"+server.port.toString());
+      print("Listening at "+server.address.host+":"+server.port.toString());
     };
     if(chain.isNotEmpty || key.isNotEmpty || password.isNotEmpty) {
       SecurityContext security = new SecurityContext();
@@ -33,8 +34,6 @@ class Carbon {
   }
   render(HttpResponse response, String page, [Map locals = null]) {
     String jadeKey = dirJade+page+'.jade';
-    // _log("rendering $jadeKey");
-    // _log(_views.keys.join(", "));
     if(_views.containsKey(jadeKey))
       response
       ..statusCode = HttpStatus.OK
@@ -61,24 +60,21 @@ class Carbon {
   }
   _notFound(HttpResponse res) => res..statusCode = HttpStatus.NOT_FOUND..headers.contentType = ContentType.TEXT..write('File not found.')..close();
   void _handleRequest(HttpRequest req) {
-    _log(req.method+": "+req.uri.path);
+    // print(req.method+": "+req.uri.path);
     for(Route route in _routes)
       if(req.method == route.method && req.uri.path == route.path && route.handler(req)) return;
     if(req.method == 'GET') {
-      _log("Attempting static at "+dirPublic+req.uri.path);
       File file = new File(dirPublic+req.uri.path);
       if(file.existsSync()) {
         req.response
         ..statusCode = HttpStatus.OK
         ..headers.contentType = _parseType(file.path)
-        ..write(file.readAsStringSync())
-        ..close();
+        ..addStream(file.openRead().asBroadcastStream()).then((HttpResponse res) => res.close());
       }
       else render(req.response, '404');
     }
   }
   ContentType _parseType(String file) {
-    // ifs
     if(file.endsWith('.js')) return ContentType.parse('application/javascript; charset=utf-8');
     for(String key in _types.keys)
       if(_types.containsKey(key))
@@ -86,7 +82,6 @@ class Carbon {
           return ContentType.parse(key+'/'+_types[key].firstMatch(file).group(1)+';'+((key != 'image')?' charset=utf-8':''));
     return ContentType.parse('text/plain; charset=utf-8');
   }
-  void _log(String message) => print(message);
 }
 
 typedef bool RouteHandler(HttpRequest req);
