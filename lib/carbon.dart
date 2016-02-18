@@ -69,25 +69,33 @@ class Carbon {
   _notFound(HttpResponse res) => res..statusCode = HttpStatus.NOT_FOUND..headers.contentType = ContentType.TEXT..write('File not found.')..close();
   void _handleRequest(HttpRequest req) {
     // print(req.method+": "+req.uri.path);
-    for(Route route in _routes){
-      if(route.useRegex()) {
-        if(route.regex.hasMatch(req.uri.path)) {
-          if(route.handler(req, matches: route.regex.allMatches(req.uri.path))) return;
+    try {
+      for(Route route in _routes){
+        if(route.useRegex()) {
+          if(route.regex.hasMatch(req.uri.path)) {
+            if(route.handler(req, matches: route.regex.allMatches(req.uri.path))) return;
+          }
+        }
+        else {
+          if(req.method == route.method && req.uri.path == route.path && route.handler(req) ) return;
         }
       }
-      else {
-        if(req.method == route.method && req.uri.path == route.path && route.handler(req) ) return;
-      }
     }
+    // TODO: This.
+    catch(e, stacktrace) { }
     if(req.method == 'GET') {
-      File file = new File(dirPublic+req.uri.path);
-      if(file.existsSync()) {
-        req.response
-        ..statusCode = HttpStatus.OK
-        ..headers.contentType = _parseType(file.path)
-        ..addStream(file.openRead().asBroadcastStream()).then((HttpResponse res) => res.close());
+      try {
+        File file = new File(dirPublic+req.uri.path);
+        if(file.existsSync()) {
+          req.response
+          ..statusCode = HttpStatus.OK
+          ..headers.contentType = _parseType(file.path)
+          ..addStream(file.openRead().asBroadcastStream()).then((HttpResponse res) => res.close());
+        }
+        else render(req.response, '404');
       }
-      else render(req.response, '404');
+      // TODO: Also this.
+      catch(e, stacktrace) { }
     }
   }
   ContentType _parseType(String file) {
