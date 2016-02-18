@@ -42,7 +42,14 @@ class Carbon {
       ..close();
     else _notFound(response);
   }
-  route(String method, String at, RouteHandler handler) => _routes.add(new Route(method,at,handler));
+  void forceHttps() {
+    HttpServer.bind(InternetAddress.ANY_IP_V4,80)
+    ..then((HttpServer server) =>
+      server.listen((HttpRequest req) =>
+        req.response.redirect(new Uri(scheme: 'https', host: req.headers.host, path: req.uri.path, fragment: req.uri.fragment)))
+    );
+  }
+  void route(String method, String at, RouteHandler handler) => _routes.add(new Route(method,at,handler));
   views(Map<String,Function> jadeViews) => _views = jadeViews;
   _compile() {
     RegExp fileName = new RegExp(r'.+/(.+?)\.(?:.+?)$');
