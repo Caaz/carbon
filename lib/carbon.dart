@@ -49,7 +49,8 @@ class Carbon {
         req.response.redirect(new Uri(scheme: 'https', host: req.headers.host, path: req.uri.path, fragment: req.uri.fragment)))
     );
   }
-  void route(String method, String at, RouteHandler handler) => _routes.add(new Route(method,at,handler));
+  void addSimpleRoute({path:'/',render:'index'}) => addRoute(new Route(handler:(req, {matches}) { this.render(req.response, render); return true; }, path:path ));
+  void addRoute(route) => _routes.add(route);
   views(Map<String,Function> jadeViews) => _views = jadeViews;
   _compile() {
     RegExp fileName = new RegExp(r'.+/(.+?)\.(?:.+?)$');
@@ -68,8 +69,16 @@ class Carbon {
   _notFound(HttpResponse res) => res..statusCode = HttpStatus.NOT_FOUND..headers.contentType = ContentType.TEXT..write('File not found.')..close();
   void _handleRequest(HttpRequest req) {
     // print(req.method+": "+req.uri.path);
-    for(Route route in _routes)
-      if(req.method == route.method && req.uri.path == route.path && route.handler(req)) return;
+    for(Route route in _routes){
+      if(route.useRegex()) {
+        if(route.regex.hasMatch(req.uri.path)) {
+          if(route.handler(req, matches: route.regex.allMatches(req.uri.path))) return;
+        }
+      }
+      else {
+        if(req.method == route.method && req.uri.path == route.path && route.handler(req) ) return;
+      }
+    }
     if(req.method == 'GET') {
       File file = new File(dirPublic+req.uri.path);
       if(file.existsSync()) {
@@ -90,6 +99,12 @@ class Carbon {
     return ContentType.parse('text/plain; charset=utf-8');
   }
 }
-
-typedef bool RouteHandler(HttpRequest req);
-class Route { String method; String path; RouteHandler handler; Route(this.method,this.path,this.handler); }
+typedef bool RouteHandler(HttpRequest request, {Iterable<Match> matches});
+class Route {
+  String method;
+  String path;
+  RegExp regex;
+  RouteHandler handler;
+  Route({RouteHandler this.handler, this.method:"GET", this.path:'/', this.regex:null});
+  bool useRegex() => regex != null;
+}

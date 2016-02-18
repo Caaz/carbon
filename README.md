@@ -14,38 +14,36 @@ dependencies:
     git: git://github.com/Caaz/carbon.git
 ```
 
-
-
 ## Usage
 Here's a quick example of using this package. With some helpful comments.
 ```dart
 import "dart:io";
 import "package:carbon/carbon.dart";
+// import "../Dart/lib/Carbon/lib/carbon.dart";
 import 'jade.views.dart' deferred as jadeViews;
+import 'package:mongo_dart/mongo_dart.dart';
 
 main() async {
-  // Creating a new Carbon instance compiles our jade and scss for us. In this case we're using the default folders.
-  Carbon server = new Carbon();
-
-  // load up our jade views, now that they're compiled. Probably.
+  Carbon server = new Carbon(dirCompile:'public/css');
   await jadeViews.loadLibrary();
-
   server
-  // Pass those views into the server, so that we can use them.
   ..views(jadeViews.JADE_TEMPLATES)
-
-  // Define a route for our root.
-  ..route('GET','/',(req) {
-
-    // render the index page defined in our jade files
-    server.render(req.response, 'index');
-    // return true, stopping the flow in the carbon request handlers.
-    return true;
-
-  })
-
-  // Start listening. In this case, with port 3000.
-  ..listen(InternetAddress.ANY_IP_V4, 3000);
+  // Root route, by default, it renders the 'index page'
+  ..addSimpleRoute()
+  // This will render the funPage.jade when we go to whatever/fun
+  ..addSimpleRoute(path:'/fun',render:'funPage')
+  // If we want to do something more serious however...
+  ..addRoute(
+    new Route(
+      // we use RegExp to do something fancy.
+      regex:new RegExp(r'^/echo/(.+?)/?$', caseSensitive: false),
+      handler:(req, {Iterable<Match> matches}) {
+        server.render(req.response, 'debug', {"msg":matches.first.group(1)} );
+        return true;
+      }
+    )
+  )
+  ..listen(InternetAddress.ANY_IP_V4, 80);
 }
 ```
 By default, Carbon uses the following folders and files, creating them if they're not there to begin with
@@ -66,4 +64,3 @@ By default, Carbon uses the following folders and files, creating them if they'r
 - Explain path usage.
 - Explain jade?
 - Optional sass.
-- Use RegExp for routs.
