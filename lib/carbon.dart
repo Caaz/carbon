@@ -1,7 +1,7 @@
 library carbon;
 import 'dart:io';
 import "package:jaded/jaded.dart" as jade;
-
+// typedef Handler();
 class Carbon {
   static final Map<String,RegExp> _types = {
     'application': new RegExp(r'\.(json|xml|octet|dart)$'),
@@ -16,9 +16,9 @@ class Carbon {
   String dirJade;
   String dirCompile;
   Carbon({this.dirPublic: 'public', this.dirScss: 'app/scss', this.dirJade: 'app/jade/pages/', this.dirCompile: 'public/compile'}) { _compile(); }
-  listen(InternetAddress address, int port, { String chain:'', String key:'', String password:'' }) {
+  listen(InternetAddress address, int port, { String chain:'', String key:'', String password:'', Function onDone}){
     var _handleServer = (HttpServer server) {
-      server.listen(_handleRequest);
+      server.listen(_handleRequest, onDone: onDone);
       print("Listening at "+server.address.host+":"+server.port.toString());
     };
     if(chain.isNotEmpty || key.isNotEmpty || password.isNotEmpty) {
@@ -49,8 +49,8 @@ class Carbon {
         req.response.redirect(new Uri(scheme: 'https', host: req.headers.host, path: req.uri.path, fragment: req.uri.fragment)))
     );
   }
-  void addSimpleRoute({path:'/',render:'index'}) => addRoute(new Route(handler:(req, {matches}) { this.render(req.response, render); return true; }, path:path ));
-  void addRoute(route) => _routes.add(route);
+  void addSimpleRoute({String path:'/',String render:'index'}) => addRoute(new Route(handler:(req, {matches}) { this.render(req.response, render); return true; }, path:path ));
+  void addRoute(Route route) => _routes.add(route);
   views(Map<String,Function> jadeViews) => _views = jadeViews;
   _compile() {
     RegExp fileName = new RegExp(r'.+/(.+?)\.(?:.+?)$');
