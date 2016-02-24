@@ -44,10 +44,13 @@ class Carbon {
   }
   void forceHttps() {
     HttpServer.bind(InternetAddress.ANY_IP_V4,80)
-    ..then((HttpServer server) =>
-      server.listen((HttpRequest req) =>
-        req.response.redirect(new Uri(scheme: 'https', host: req.headers.host, path: req.uri.path, fragment: req.uri.fragment)))
-    );
+    ..then((HttpServer server) {
+      server.listen((HttpRequest req) {
+        try {
+          req.response.redirect(new Uri(scheme: 'https', host: req.headers.host, path: req.uri.path, fragment: req.uri.fragment));
+        } catch(e) { }
+      });
+    });
   }
   void addSimpleRoute({String path:'/',String render:'index'}) => addRoute(new Route(handler:(req, {matches}) { this.render(req.response, render); return true; }, path:path ));
   void addRoute(Route route) => _routes.add(route);
