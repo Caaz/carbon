@@ -15,7 +15,7 @@ class Carbon {
   String dirScss;
   String dirJade;
   String dirCompile;
-  Carbon({this.dirPublic: 'public', this.dirScss: 'app/scss', this.dirJade: 'app/jade/pages/', this.dirCompile: 'public/compile'}) { _compile(); }
+  Carbon({this.dirPublic: 'public', this.dirScss: 'app/sass', this.dirJade: 'app/jade/pages/', this.dirCompile: 'public/compile'}) { _compile(); }
   listen(InternetAddress address, int port, { String chain:'', String key:'', String password:'', Function onDone}){
     var _handleServer = (HttpServer server) {
       server.listen(_handleRequest, onDone: onDone);
@@ -60,7 +60,7 @@ class Carbon {
     // Compile stylesheets.
     for (var file in new Directory(dirScss).listSync())
       if ((file is File) && (!underscore.hasMatch(file.path)))
-        Process.run('sass', [ '--scss', '--style=compressed', '--sourcemap=none',
+        Process.run('sass', [ (file.path.endsWith('.scss'))?'--scss':'', '--style=compressed', '--sourcemap=none',
           file.path, dirCompile+'/'+fileName.firstMatch(file.path).group(1)+'.css'])
           ..then((proc){ if(proc.stderr.length>1) throw proc.stderr; });
     // Compile jade.
