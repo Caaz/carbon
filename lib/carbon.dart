@@ -59,10 +59,14 @@ class Carbon {
     for(String dir in [dirPublic,dirScss,dirJade,dirCompile]) new Directory(dir).createSync(recursive: true);
     // Compile stylesheets.
     for (var file in new Directory(dirScss).listSync())
-      if ((file is File) && (!underscore.hasMatch(file.path)))
-        Process.run('sass', [ (file.path.endsWith('.scss'))?'--scss':'', '--style=compressed', '--sourcemap=none',
-          file.path, dirCompile+'/'+fileName.firstMatch(file.path).group(1)+'.css'])
-          ..then((proc){ if(proc.stderr.length>1) throw proc.stderr; });
+      if ((file is File) && (!underscore.hasMatch(file.path))){
+        String output = dirCompile+'/'+fileName.firstMatch(file.path).group(1)+'.css';
+        print("Compiling ${file.path} to $output");
+        List args = new List();
+        if (file.path.endsWith('.scss')) args.add('--scss');
+        args.addAll(['--style=compressed', '--sourcemap=none',file.path, output]);
+        Process.run('sass', args)..then((proc){ if(proc.stderr.length>1) throw proc.stderr; });
+      }
     // Compile jade.
     new File('jade.views.dart').writeAsStringSync(jade.renderDirectory(dirJade));
   }
